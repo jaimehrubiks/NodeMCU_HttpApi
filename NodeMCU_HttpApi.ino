@@ -90,10 +90,11 @@ boolean leds_route(String str){
   else return false;
 
   // Colors
-  for (i=0;i<3;token!=NULL){
+  for (i=0;i<3;i++){
     token = strtok(NULL, separator);
     if ( token != NULL ) colors[i] = atoi(token);
     else return false;
+    if (colors[i] < 0 || colors[i] > 255) colors[i] = 0;       
   }
 
   // Set Colors
