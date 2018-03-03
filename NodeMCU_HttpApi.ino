@@ -3,14 +3,29 @@
 #include <Adafruit_NeoPixel.h>
 
 #define NUMPIXELS   6
+#define LEDS_PIN    D9
+#define TRIGGERPIN D10
+#define ECHOPIN    D8
+
 #define WIFI_SSID   "BD_WIFI_"
 #define WIFI_PWD    "1234567890"
 #define HTTP_PORTN  80
 #define BUFSIZE     15
+#define DELAY       50
 
 Adafruit_NeoPixel pixels;         // Setup pixels Lib
 WiFiServer server(80);            // Setup HTTP Server
+char report_ip[BUFSIZE] = {0}; 
+int events_on = 0;
 
+//void events_report(void);
+//long ultrasound_read(void);
+
+
+/*
+ *  SETUP AND LOOP
+ */
+ 
 void setup() {
   initHardware();                 // Init Hardware
   setupWiFi();                    // Init WiFi
@@ -19,29 +34,20 @@ void setup() {
 
 void loop() {
   
-  // Check if a client has connected
   WiFiClient client = server.available();
-  if (!client) {
-    return;
+  if (client) {
+    request_process(client);
+  } 
+  if(events_on){
+    events_report();
   }
   
-  // Read the first line of the request
-  String req = client.readStringUntil('\r');
-  client.flush();
-  //Serial.println(req);
-
-  // Main Setup
-  int i, res;
-  if ((i = req.indexOf("/leds/")) != -1) res = leds_route(req.substring(i+6));
-
-  // Generate Response
-  String s;
-  if (res)  s = "HTTP/1.1 200 OK\r\n";
-  else      s = "HTTP/1.1 400 BAD REQUEST\r\n";
-  client.print(s);
-  client.flush();
-  
 }
+
+
+/*
+ *  SETUP
+ */
 
 void initHardware() {
   
@@ -49,7 +55,7 @@ void initHardware() {
   //Serial.begin(115200);
   
   // Setup Pixels
-  pixels = Adafruit_NeoPixel(NUMPIXELS, D9, NEO_GRB + NEO_KHZ800);
+  pixels = Adafruit_NeoPixel(NUMPIXELS, LEDS_PIN, NEO_GRB + NEO_KHZ800);
   pixels.begin(); // This initializes the NeoPixel library.
   
 }
@@ -78,6 +84,60 @@ void setupWiFi() {
   
 }
 
+
+/*
+ *  MAIN SERVER LOGIC
+ */
+ 
+void request_process(WiFiClient client){
+
+  String req = client.readStringUntil('\r');
+  client.flush();
+
+  // Main Setup
+  int i, res;
+  String s;
+  if ((i = req.indexOf("/leds/")) != -1) {
+    res = leds_route(req.substring(i+6));
+    if (res)  s = "HTTP/1.1 200 OK\r\n";
+    else      s = "HTTP/1.1 400 BAD REQUEST\r\n";
+  }
+  else if ((i = req.indexOf("/ultrasound")) != -1) {
+    long distance;
+    res = ultrasound_route(&distance);
+    if (res!=-1){
+      s =  "HTTP/1.1 200 OK\r\n";
+      s += "Content-Type: text/plain\r\n\r\n";
+      s.concat(5+distance);
+      s.concat("\r\n");
+    }else{
+      s = "HTTP/1.1 400 BAD REQUEST\r\n";
+    }
+  }
+  else if ((i = req.indexOf("/events_report/")) != -1){
+    res = events_route(req.substring(i+15));
+    if (res)  s = "HTTP/1.1 200 OK\r\n";
+    else      s = "HTTP/1.1 400 BAD REQUEST\r\n";
+  }
+  else if ((i = req.indexOf("/leds_reset")) != -1){
+    res = leds_reset();
+    if (res)  s = "HTTP/1.1 200 OK\r\n";
+    else      s = "HTTP/1.1 400 BAD REQUEST\r\n";
+  }
+  else{
+    s = "HTTP/1.1 400 BAD REQUEST\r\n";
+  }
+
+
+  client.print(s);
+  client.flush();
+}
+
+
+/*
+ * HTTP REST ROUTES
+ */
+
 boolean leds_route(String str){ 
   char data[BUFSIZE] = {0}, separator[] = "/";
   char *token;
@@ -104,6 +164,66 @@ boolean leds_route(String str){
   return true;
   
 }
+
+int ultrasound_route(long *distance){
+  *distance = ultrasound_read();
+  if(distance>0) return 0;
+  else          return -1;
+}
+
+int events_route(String str){
+  char data[BUFSIZE] = {0};
+  str.toCharArray(data,BUFSIZE);
+
+  strncpy(report_ip, data, BUFSIZE);
+  events_on = 1;
+}
+
+/*
+ *  ASYNC
+ */
+
+void events_report(void){
+  
+  long distance = ultrasound_read();
+  
+}
+
+/*
+ *  LOW level
+ */
+long ultrasound_read(void){
+  
+  long duration, distance;
+  // Clears the trigPin
+  digitalWrite(TRIGGERPIN, LOW);  
+  delayMicroseconds(3); 
+  
+  // Sets the trigPin on HIGH state for 12 micro seconds
+  digitalWrite(TRIGGERPIN, HIGH);
+  delayMicroseconds(12);  
+  digitalWrite(TRIGGERPIN, LOW);
+  
+  duration = pulseIn(ECHOPIN, HIGH);
+  // Calculating the distance
+  distance = (duration*0.034) / 2;
+
+  delay(DELAY);
+
+  return distance;
+}
+
+int leds_reset(void){
+  for(int i=0;i<NUMPIXELS;i++){
+    pixels.setPixelColor(i, pixels.Color(0,0,0)); 
+  }
+  pixels.show();
+  return 1; 
+}
+
+/*
+ *  Complementary
+ */
 
 boolean isValidNumber(String str) { // By hbx2013 
    boolean isNum=false;
