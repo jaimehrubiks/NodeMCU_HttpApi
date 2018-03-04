@@ -1,6 +1,10 @@
+#include <NeoPixelAnimator.h>
+#include <NeoPixelBrightnessBus.h>
+#include <NeoPixelBus.h>
+
 #include <ESP8266WiFi.h>
 
-#include <Adafruit_NeoPixel.h>
+//#include <Adafruit_NeoPixel.h>
 
 #define NUMPIXELS   6
 #define LEDS_PIN    D9
