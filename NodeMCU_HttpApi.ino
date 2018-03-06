@@ -1,9 +1,15 @@
+//#include <NeoPixelAnimator.h>
+//#include <NeoPixelBrightnessBus.h>
+#include <NeoPixelBus.h>
+
 #include <ESP8266WiFi.h>
 
-#include <Adafruit_NeoPixel.h>
+//#include <Adafruit_NeoPixel.h>
+
+
 
 #define NUMPIXELS   6
-#define LEDS_PIN    D9
+#define LEDS_PIN    9
 #define TRIGGERPIN D10
 #define ECHOPIN    D8
 
@@ -13,7 +19,11 @@
 #define BUFSIZE     15
 #define DELAY       50
 
-Adafruit_NeoPixel pixels;         // Setup pixels Lib
+const uint16_t PixelCount = NUMPIXELS; // this example assumes 4 pixels, making it smaller will cause a failure
+const uint8_t PixelPin = LEDS_PIN;  // make sure to set this to the correct pin, ignored for Esp8266
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
+RgbColor black(0);
+
 WiFiServer server(80);            // Setup HTTP Server
 char report_ip[BUFSIZE] = {0}; 
 int events_on = 0;
@@ -55,9 +65,11 @@ void initHardware() {
   //Serial.begin(115200);
   
   // Setup Pixels
-  pixels = Adafruit_NeoPixel(NUMPIXELS, LEDS_PIN, NEO_GRB + NEO_KHZ800);
-  pixels.begin(); // This initializes the NeoPixel library.
-  
+  //pixels = Adafruit_NeoPixel(NUMPIXELS, LEDS_PIN, NEO_GRB + NEO_KHZ800);
+  //pixels.begin(); // This initializes the NeoPixel library.
+    strip.Begin();
+    strip.Show();
+
 }
 
 void setupWiFi() {
@@ -158,8 +170,8 @@ boolean leds_route(String str){
   }
 
   // Set Colors
-  pixels.setPixelColor(led, pixels.Color(colors[0],colors[1],colors[2])); 
-  pixels.show(); 
+  strip.SetPixelColor(led, RgbColor(colors[0],colors[1],colors[2])); 
+  strip.Show(); 
   
   return true;
   
@@ -208,16 +220,18 @@ long ultrasound_read(void){
   // Calculating the distance
   distance = (duration*0.034) / 2;
 
-  delay(DELAY);
+  //delay(DELAY);
 
   return distance;
 }
 
 int leds_reset(void){
+  
   for(int i=0;i<NUMPIXELS;i++){
-    pixels.setPixelColor(i, pixels.Color(0,0,0)); 
+    strip.SetPixelColor(i, black); 
   }
-  pixels.show();
+  
+  strip.Show();
   return 1; 
 }
 
