@@ -61,12 +61,14 @@ void loop() {
 
 void initHardware() {
   
-  // Setup Serial
-  //Serial.begin(115200);
-  
-  // Setup Pixels
-  //pixels = Adafruit_NeoPixel(NUMPIXELS, LEDS_PIN, NEO_GRB + NEO_KHZ800);
-  //pixels.begin(); // This initializes the NeoPixel library.
+    // Serial setup
+    //Serial.begin(9600);
+
+    // Pin setup
+    pinMode(TRIGGERPIN, OUTPUT); // Sets the trigPin as an Output
+    pinMode(ECHOPIN, INPUT); // Sets the echoPin as an Input
+
+    // Leds strip setup
     strip.Begin();
     strip.Show();
 
@@ -179,7 +181,7 @@ boolean leds_route(String str){
 
 int ultrasound_route(long *distance){
   *distance = ultrasound_read();
-  if(distance>0) return 0;
+  if(*distance>0) return 0;
   else          return -1;
 }
 
@@ -219,8 +221,6 @@ long ultrasound_read(void){
   duration = pulseIn(ECHOPIN, HIGH);
   // Calculating the distance
   distance = (duration*0.034) / 2;
-
-  //delay(DELAY);
 
   return distance;
 }
