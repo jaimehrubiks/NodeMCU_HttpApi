@@ -122,7 +122,7 @@ void request_process(WiFiClient client){
     if (res!=-1){
       s =  "HTTP/1.1 200 OK\r\n";
       s += "Content-Type: text/plain\r\n\r\n";
-      s.concat(5+distance);
+      s.concat(distance);
       s.concat("\r\n");
     }else{
       s = "HTTP/1.1 400 BAD REQUEST\r\n";
