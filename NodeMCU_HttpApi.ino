@@ -3,6 +3,7 @@
 #include <NeoPixelBus.h>
 
 #include <ESP8266WiFi.h>
+#include <Servo.h>
 
 //#include <Adafruit_NeoPixel.h>
 
@@ -10,6 +11,7 @@
 
 #define NUMPIXELS   6
 #define LEDS_PIN    9
+#define SERVOSN     6
 #define TRIGGERPIN D10
 #define ECHOPIN    D8
 
@@ -31,7 +33,7 @@ int events_on = 0;
 
 //void events_report(void);
 //long ultrasound_read(void);
-
+Servo servo[SERVOSN];
 
 /*
  *  SETUP AND LOOP
@@ -73,6 +75,15 @@ void initHardware() {
     strip.Begin();
     strip.Show();
 
+    // Servos Setup
+    servo[0].attach(D0);
+    servo[1].attach(D1);
+    servo[2].attach(D2);
+    servo[3].attach(D3);
+    servo[4].attach(D4);
+    servo[5].attach(D5);
+    for(int i=0;i<SERVOSN;i++) servo[i].write(90);
+    
 }
 
 void setupWiFi() {
@@ -117,6 +128,11 @@ void request_process(WiFiClient client){
     if (res)  s = "HTTP/1.1 200 OK\r\n";
     else      s = "HTTP/1.1 400 BAD REQUEST\r\n";
   }
+  else if ((i = req.indexOf("/servos/")) != -1) {
+    res = servos_route(req.substring(i+8));
+    if (res)  s = "HTTP/1.1 200 OK\r\n";
+    else      s = "HTTP/1.1 400 BAD REQUEST\r\n";
+  }
   else if ((i = req.indexOf("/ultrasound")) != -1) {
     long distance;
     res = ultrasound_route(&distance);
@@ -158,6 +174,19 @@ void request_process(WiFiClient client){
  * HTTP REST ROUTES
  */
 
+boolean servos_route(String str){ 
+  int ser = str.substring(0,1).toInt();
+  int pos = str.substring(2).toInt();
+  if(ser >= 0 && ser < SERVOSN && pos>=0 && pos<= 270){
+      servo[ser].write(pos);
+      return true;
+  }
+  else{
+    return false;
+  }
+  
+}
+
 boolean leds_route(String str){ 
   char data[BUFSIZE] = {0}, separator[] = "/";
   char *token;
@@ -184,6 +213,7 @@ boolean leds_route(String str){
   return true;
   
 }
+
 
 int ultrasound_route(long *distance){
   *distance = ultrasound_read();
