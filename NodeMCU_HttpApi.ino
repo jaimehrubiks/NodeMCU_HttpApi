@@ -17,6 +17,7 @@
 #define WIFI_PWD    "1234567890"
 #define HTTP_PORTN  80
 #define BUFSIZE     15
+#define BUFSIZE2    50
 #define DELAY       50
 
 const uint16_t PixelCount = NUMPIXELS; // this example assumes 4 pixels, making it smaller will cause a failure
@@ -138,6 +139,11 @@ void request_process(WiFiClient client){
     if (res)  s = "HTTP/1.1 200 OK\r\n";
     else      s = "HTTP/1.1 400 BAD REQUEST\r\n";
   }
+  else if ((i = req.indexOf("/leds_set/")) != -1){
+    res = leds_set(req.substring(i+10));
+    if (res)  s = "HTTP/1.1 200 OK\r\n";
+    else      s = "HTTP/1.1 400 BAD REQUEST\r\n";
+  }
   else{
     s = "HTTP/1.1 400 BAD REQUEST\r\n";
   }
@@ -233,6 +239,41 @@ int leds_reset(void){
   
   strip.Show();
   return 1; 
+}
+
+
+int leds_set(String str){
+  
+  char data[BUFSIZE2] = {0}, separator[] = "/";
+  char *token;
+  int colors[18] = {0}, i;
+  str.toCharArray(data,BUFSIZE2);
+
+  // Led Number
+  token = strtok(data, separator);
+  if ( token != NULL) colors[0] = atoi(token);
+  else return false;
+
+  // Colors
+  for (i=1;i<18;i++){
+    token = strtok(NULL, separator);
+    if ( token != NULL ) colors[i] = atoi(token);
+    else return false;
+    if (colors[i] < 0 || colors[i] > 255) colors[i] = 0;       
+  }
+
+  // Set Colors
+  strip.SetPixelColor(0, RgbColor(colors[0],colors[1],colors[2])); 
+  strip.SetPixelColor(1, RgbColor(colors[3],colors[4],colors[5])); 
+  strip.SetPixelColor(2, RgbColor(colors[6],colors[7],colors[8])); 
+  strip.SetPixelColor(3, RgbColor(colors[9],colors[10],colors[11])); 
+  strip.SetPixelColor(4, RgbColor(colors[12],colors[13],colors[14])); 
+  strip.SetPixelColor(5, RgbColor(colors[15],colors[16],colors[17])); 
+
+  strip.Show(); 
+  
+  return true;
+  
 }
 
 /*
