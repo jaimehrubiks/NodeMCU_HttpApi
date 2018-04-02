@@ -10,7 +10,7 @@
 // Configuración Básica
 #define WIFI_SSID   "BD_WIFI_"
 #define WIFI_PWD    "1234567890"
-#define NODE_NAME   "Equipo_de_BD"
+#define NODE_NAME   "Equipo_de_BD" //Sin espacios
 
 #define WIFI_MODE   0 // 1 Para AP (punto de acceso), 0 Para cliente WiFi
 //#define DHCP_ENABLE 0 // 1 para activar
