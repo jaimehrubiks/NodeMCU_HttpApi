@@ -138,6 +138,7 @@ void request_process(WiFiClient client){
     res = ultrasound_route(&distance);
     if (res!=-1){
       s =  "HTTP/1.1 200 OK\r\n";
+      s += "Access-Control-Allow-Origin: *\r\n";
       s += "Content-Type: text/plain\r\n\r\n";
       s.concat(distance);
       s.concat("\r\n");
