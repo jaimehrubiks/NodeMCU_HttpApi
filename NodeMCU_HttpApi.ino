@@ -7,20 +7,29 @@
 
 //#include <Adafruit_NeoPixel.h>
 
+// Configuración Básica
+#define WIFI_SSID   "BD_WIFI_"
+#define WIFI_PWD    "1234567890"
+#define NODE_NAME   "Equipo_de_BD"
+
+#define WIFI_MODE   0 // 1 Para AP (punto de acceso), 0 Para cliente WiFi
+//#define DHCP_ENABLE 0 // 1 para activar
+//IPAddress wifi_ip (192, 168, 1, 101); // IP cuando no se utiliza DHCP
+// Fin Configuración Básica
 
 
+// Configuración Avanzada
 #define NUMPIXELS   6
 #define LEDS_PIN    9
 #define SERVOSN     6
 #define TRIGGERPIN D10
 #define ECHOPIN    D8
 
-#define WIFI_SSID   "BD_WIFI_"
-#define WIFI_PWD    "1234567890"
 #define HTTP_PORTN  80
 #define BUFSIZE     15
 #define BUFSIZE2    50
 #define DELAY       50
+// Fin Configuración Avanzada
 
 const uint16_t PixelCount = NUMPIXELS; // this example assumes 4 pixels, making it smaller will cause a failure
 const uint8_t PixelPin = LEDS_PIN;  // make sure to set this to the correct pin, ignored for Esp8266
@@ -41,7 +50,11 @@ Servo servo[SERVOSN];
  
 void setup() {
   initHardware();                 // Init Hardware
-  setupWiFi();                    // Init WiFi
+  if(WIFI_MODE){                  // Init WiFi
+    setupWiFi();
+  }else{
+    setupWiFi_STA(); 
+  }
   server.begin();                 // Init HTTP Server
 }
 
@@ -107,6 +120,18 @@ void setupWiFi() {
 
   const char WiFiAPPSK[] = WIFI_PWD;
   WiFi.softAP(AP_NameChar, WiFiAPPSK);
+  
+}
+
+void setupWiFi_STA() {
+
+  WiFi.mode(WIFI_STA);
+  const char* ssid     = WIFI_SSID;
+  const char* password = WIFI_PWD;
+  const char* node_name = NODE_NAME;
+  WiFi.hostname(node_name);
+  //if(!DHCP_ENABLE) WiFi.config(wifi_ip);
+  WiFi.begin(ssid, password);
   
 }
 
